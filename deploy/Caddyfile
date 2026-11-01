@@ -1,0 +1,66 @@
+# Caddy 负责 TLS 终止、HTTP→HTTPS 跳转、自定义域名按需证书(需求 5.x、22.7)。
+# 此文件未在 Caddy 实例上运行验证。
+
+{
+	email {$ACME_EMAIL}
+	# 仅为已登记的自定义域名按需签发证书
+	on_demand_tls {
+		ask http://server:3000/internal/tls-ask
+	}
+}
+
+# 所有明文请求 301 跳转到 HTTPS
+http:// {
+	redir https://{host}{uri} 301
+}
+
+(tenant_site) {
+	# 内部接口(证书 ask 等)不对外暴露
+	@internal path /internal/*
+	respond @internal 404
+
+	handle /api/* {
+		reverse_proxy server:3000
+	}
+	handle /files/* {
+		reverse_proxy server:3000
+	}
+	handle /open/* {
+		reverse_proxy server:3000
+	}
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+	encode zstd gzip
+}
+
+# 系统主域名
+{$APP_DOMAIN} {
+	import tenant_site
+}
+
+# 租户自定义域名(白标交付):证书由 ask 端点放行后按需签发
+https:// {
+	tls {
+		on_demand
+	}
+	import tenant_site
+}
+
+# 平台运营后台使用独立域名
+{$CONSOLE_DOMAIN} {
+	@internal path /internal/*
+	respond @internal 404
+
+	handle /platform/* {
+		reverse_proxy server:3000
+	}
+	handle {
+		root * /srv/console
+		try_files {path} /index.html
+		file_server
+	}
+	encode zstd gzip
+}

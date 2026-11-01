@@ -1,0 +1,94 @@
+# 未在沙箱验证(无 Docker)。用法:  cp .env.example .env && 编辑 && docker compose up -d --build
+name: lite-erp
+
+x-env: &env
+  DEPLOYMENT_MODE: ${DEPLOYMENT_MODE:?DEPLOYMENT_MODE 必须设置为 saas 或 standalone}
+  DATABASE_ADMIN_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/erp
+  DATABASE_APP_URL: postgres://erp_app:${APP_DB_PASSWORD}@postgres:5432/erp
+  DATABASE_PLATFORM_URL: postgres://erp_platform:${PLATFORM_DB_PASSWORD}@postgres:5432/erp
+  REDIS_URL: redis://redis:6379
+  # Caddy 容器位于 Docker 网络内,按网段信任其 X-Forwarded-Proto
+  TRUSTED_PROXIES: ${TRUSTED_PROXIES:-172.16.0.0/12,10.0.0.0/8,192.168.0.0/16}
+  FILE_STORAGE_DIR: /data/files
+  BACKUP_DIR: /data/backups
+  PLUGINS_DIR: /app/plugins
+
+x-server: &server
+  build:
+    context: ..
+    dockerfile: deploy/Dockerfile
+    target: server
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    - app-data:/data
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: erp
+      TZ: Asia/Shanghai
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d erp']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  server:
+    <<: *server
+    environment:
+      <<: *env
+      ROLE: api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  worker:
+    <<: *server
+    environment:
+      <<: *env
+      ROLE: worker
+    depends_on:
+      server:
+        condition: service_healthy
+
+  caddy:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: proxy
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      server:
+        condition: service_healthy
+
+volumes:
+  pg-data:
+  redis-data:
+  app-data:
+  caddy-data:
+  caddy-config:

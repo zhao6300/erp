@@ -1,0 +1,35 @@
+{
+  "name": "@erp/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest --run",
+    "typecheck": "tsc -p tsconfig.json",
+    "start": "tsx src/main.ts",
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@erp/shared": "workspace:*",
+    "@erp/plugin-sdk": "workspace:*",
+    "@fastify/multipart": "^9.0.0",
+    "@node-rs/argon2": "^2.2.2",
+    "bullmq": "^5.81.5",
+    "exceljs": "^4.4.0",
+    "ioredis": "^5.11.1",
+    "pg": "^8.23.1",
+    "zod": "^3.25.76",
+    "fastify": "^5.12.7",
+    "@fastify/cors": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.15.0",
+    "embedded-postgres": "16.15.0-beta.19",
+    "fast-check": "^4.10.2",
+    "tsup": "^8.5.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

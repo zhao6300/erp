@@ -1,0 +1,11 @@
+node_modules
+dist
+.turbo
+*.log
+.env
+.env.local
+.vite
+coverage
+.pgdata
+/backups
+apps/miniapp/unpackage

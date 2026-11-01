@@ -1,0 +1,22 @@
+{
+  "name": "lite-erp",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Lite ERP: 面向中小企业的精简进销存与基础财务系统",
+  "packageManager": "pnpm@12.16.1",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "pnpm -r --workspace-concurrency=1 test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "build": "pnpm -r build",
+    "ci": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

@@ -1,0 +1,21 @@
+html, body, #app { height: 100%; margin: 0; }
+/* 任何宽度都不出现页面级横向滚动(需求 19.3、19.11) */
+body { overflow-x: hidden; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+.page { padding: 16px; max-width: 100%; box-sizing: border-box; }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+/* 表格容器内部横向滚动 */
+.table-wrap { overflow-x: auto; max-width: 100%; }
+.cards { display: none; }
+.card-item { border: 1px solid var(--el-border-color-light); border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fff; }
+.card-item .row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 14px; }
+.card-item .row .k { color: #888; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0 16px; }
+.err { color: var(--el-color-danger); font-size: 12px; }
+.total-bar { display: flex; gap: 24px; justify-content: flex-end; font-size: 16px; margin: 12px 0; flex-wrap: wrap; }
+@media (max-width: 768px) {
+  .page { padding: 8px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .table-wrap.as-cards .el-table { display: none; }
+  .table-wrap.as-cards .cards { display: block; }
+  .el-dialog { width: 94% !important; }
+}

@@ -1,0 +1,27 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# 允许需要安装脚本的依赖(pnpm 默认拦截构建脚本)
+allowBuilds:
+  esbuild: true
+  '@swc/core': true
+  '@node-rs/argon2': true
+  '@embedded-postgres/linux-x64': true
+  '@embedded-postgres/linux-arm64': true
+  '@embedded-postgres/darwin-x64': true
+  '@embedded-postgres/darwin-arm64': true
+  vue-demi: true
+  # BullMQ 的可选原生加速,不需要
+  msgpackr-extract: false
+
+minimumReleaseAgeExclude:
+  - '@embedded-postgres/darwin-arm64@16.15.0-beta.19'
+  - '@embedded-postgres/darwin-x64@16.15.0-beta.19'
+  - '@embedded-postgres/linux-arm64@16.15.0-beta.19'
+  - '@embedded-postgres/linux-arm@16.15.0-beta.19'
+  - '@embedded-postgres/linux-ia32@16.15.0-beta.19'
+  - '@embedded-postgres/linux-ppc64@16.15.0-beta.19'
+  - '@embedded-postgres/linux-x64@16.15.0-beta.19'
+  - '@embedded-postgres/windows-x64@16.15.0-beta.19'
+  - embedded-postgres@16.15.0-beta.19

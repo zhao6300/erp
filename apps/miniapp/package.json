@@ -1,0 +1,27 @@
+{
+  "name": "@erp/miniapp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lite ERP 微信小程序(uni-app, 仅编译到 mp-weixin)。业务逻辑在 src/core(纯 TS,可单测);页面在 src/pages。",
+  "scripts": {
+    "test": "vitest --run",
+    "typecheck": "tsc -p tsconfig.json && vue-tsc -p tsconfig.pages.json",
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build:mp-weixin": "uni build -p mp-weixin"
+  },
+  "dependencies": {
+    "@erp/api-client": "workspace:*",
+    "@erp/shared": "workspace:*",
+    "vue": "^3.5.44"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7",
+    "fast-check": "^4.10.2",
+    "vue-tsc": "^2.2.12"
+  },
+  "uniAppToolchain": {
+    "_comment": "编译小程序需要 @dcloudio/* 全家桶且版本必须严格一致(vite 插件、uni-app、uni-mp-weixin、uni-h5 等)。请在联网环境运行: npx @dcloudio/uvm@latest  以对齐版本,然后 pnpm add -D 对应的 @dcloudio/vite-plugin-uni 等。详见 README.md。"
+  }
+}

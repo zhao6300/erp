@@ -1,0 +1,13 @@
+{
+  "pages": [
+    { "path": "pages/index/index", "style": { "navigationBarTitleText": "首页" } },
+    { "path": "pages/login/login", "style": { "navigationBarTitleText": "登录" } },
+    { "path": "pages/sales/new", "style": { "navigationBarTitleText": "销售开单" } },
+    { "path": "pages/purchase/new", "style": { "navigationBarTitleText": "采购开单" } },
+    { "path": "pages/finance/new", "style": { "navigationBarTitleText": "收付款" } },
+    { "path": "pages/docs/list", "style": { "navigationBarTitleText": "单据" } },
+    { "path": "pages/stock/index", "style": { "navigationBarTitleText": "库存与商品" } },
+    { "path": "pages/report/index", "style": { "navigationBarTitleText": "常用报表" } }
+  ],
+  "globalStyle": { "navigationBarTextStyle": "white", "navigationBarBackgroundColor": "#1677FF", "backgroundColor": "#f5f5f5" }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Lite ERP",
+  "appid": "",
+  "description": "Lite ERP 小程序",
+  "versionName": "0.1.0",
+  "versionCode": "1",
+  "vueVersion": "3",
+  "mp-weixin": {
+    "appid": "",
+    "setting": { "urlCheck": true, "es6": true, "minified": true },
+    "usingComponents": true,
+    "permission": { "scope.camera": { "desc": "用于扫描商品条码" } },
+    "requiredPrivateInfos": []
+  }
+}
