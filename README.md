@@ -25,11 +25,18 @@ docs/        open-api-v1.md
 
 ```bash
 pnpm install
+pnpm --filter @erp/server setup:browser   # 下载 PDF/图片渲染测试用的无头 Chromium(一次即可)
 pnpm test        # 全部包的测试
 pnpm typecheck   # tsc / vue-tsc
 pnpm lint
 pnpm build       # server(tsup)、web、console
 ```
+
+单据 PDF/图片(`GET /api/documents/:id/print?format=html|pdf|png`)由服务端用 Playwright + 无头 Chromium 渲染,
+和浏览器打印共用同一份 HTML 与分页结果。渲染时禁用 JavaScript、拦截除 `data:` 外的所有请求(租户 Logo 以 data URI 内联)。
+服务器需要安装 CJK 字体,否则中文显示为空白(`deploy/Dockerfile` 已安装 `fonts-noto-cjk`);
+容器内以 root 运行时设置 `CHROMIUM_NO_SANDBOX=true`,系统浏览器路径用 `CHROMIUM_PATH` 指定。
+`test/print-render.test.ts` 需要 Chromium;本机没有中文字体时测试仍能通过,但生成的中文是空白。
 
 服务端集成测试连接**真实的 PostgreSQL 16**:默认用 `embedded-postgres` 在本机起一个实例(root 用户下自动降权到 nobody);
 设置 `TEST_DATABASE_ADMIN_URL=postgres://postgres:pw@host:5432/postgres` 可改用外部库(例如 CI 里的 `postgres:16` 容器)。
@@ -68,15 +75,16 @@ Caddy 负责 HTTPS、HTTP→HTTPS 301 和自定义域名按需证书(`/internal/
 - 开放接口的访问密钥哈希使用 `BACKUP_HMAC_SECRET`,更换该变量会让所有密钥失效。
 
 **功能缺口**
-- **单据 PDF/图片输出没有实现**(没有 Playwright)。服务端只输出 HTML 打印页;小程序"分享"只转发单据卡片(单号+金额),
-  不是需求 20.8 要求的 PDF/图片。
 - 小程序页面(`apps/miniapp/src/pages`)**从未用 uni-app 工具链编译或在微信开发者工具里运行过**。
   只做了类型检查(`vue-tsc` + 本地 shim),`src/core` 里的业务逻辑有单元测试。
+  单据"分享"(下载服务端生成的 PDF/图片 → `wx.shareFileMessage` / `wx.showShareImageMenu`)的下载与状态码处理有单元测试,
+  但这两个微信接口本身只在真机/开发者工具里才能验证。
   `package.json` 里没有 `@dcloudio/*` 依赖,需要联网运行 `npx @dcloudio/uvm@latest` 对齐版本后再 `pnpm add -D`;装好工具链后删除 `src/uni-shim.d.ts`。
 - 自定义域名(`customDomain`)不包含在配置包导出里;配置包导入时,仓库范围的角色会降级为"仅本人"。
 - 反向冲销收款/其他收入可能让资金账户余额为负(规格只要求审核付款/转账时检查)。
 - **没有做**任务文档 27.x 的 Playwright 端到端、miniprogram-automator 和性能脚本。
-- `deploy/` 下的 Dockerfile、compose、Caddyfile **没有在 Docker/Caddy 里运行过**(沙箱没有 Docker);
+- `deploy/` 下的 Dockerfile、compose、Caddyfile **没有在 Docker/Caddy 里运行过**(沙箱没有 Docker)。
+  特别是镜像里用 apt 安装的 Debian `chromium` 与 `playwright-core` 版本是否兼容,需要在真实镜像里确认一次 PDF 输出;
   只验证了 compose YAML 可解析、服务端 tsup 产物能在空库上完成角色创建→迁移→默认租户→`/healthz`(`BOOT_ENTRY=dist` 的 `test/boot.test.ts`)。
 
 **属性测试的运行次数**:文档要求每个属性 `numRuns ≥ 100`。纯函数属性基本满足;

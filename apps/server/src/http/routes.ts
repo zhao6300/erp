@@ -284,13 +284,19 @@ export function registerRoutes(app: FastifyInstance, c: Container, p: Pipeline):
   route('put', '/print-templates/:id', { op: 'write', adminOnly: true }, (ctx, req, tx) => c.print.update(tx, ctx, id(req), req.body as never))
   route('post', '/print-templates/:id/default', { op: 'write', adminOnly: true }, (ctx, req, tx) => c.print.setDefault(tx, ctx, id(req)))
   route('delete', '/print-templates/:id', { op: 'write', adminOnly: true }, (ctx, req, tx) => c.print.delete(tx, ctx, id(req)))
+  /** ?format=html(默认,浏览器打印)| pdf | png;?download=1 时以附件形式返回(小程序下载后调起微信发送,需求 20.8) */
   app.get('/api/documents/:id/print', async (req, res) => {
+    const format = q(req).format ?? 'html'
+    if (format !== 'html' && format !== 'pdf' && format !== 'png') throw new AppError('VALIDATION_FAILED', undefined, [{ field: 'format', reason: 'format 须为 html、pdf 或 png' }])
     const r = await p.run(req, { op: 'read', tx: 'none', mask: false }, async (ctx) => {
       const doc = await c.documents.get(ctx, id(req))
       c.perms.require(ctx, `${doc.docType}:print`)
-      return c.print.renderHtml(ctx, id(req), q(req).templateId)
+      return { ...(await c.print.renderDocument(ctx, id(req), format, q(req).templateId)), docNo: doc.docNo }
     })
-    res.header('content-type', 'text/html; charset=utf-8').header('content-security-policy', "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:").send(r.html)
+    res.header('content-type', r.mime).header('x-content-type-options', 'nosniff')
+    if (format === 'html') res.header('content-security-policy', "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:")
+    if (q(req).download === '1') res.header('content-disposition', `attachment; filename="${encodeURIComponent(r.docNo || 'document')}.${r.ext}"`)
+    res.send(r.body)
   })
 
   /* ───────── 权限 / 用户 / 审计 ───────── */

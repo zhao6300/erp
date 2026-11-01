@@ -135,3 +135,11 @@ describe('权限与菜单、主题色', () => {
     expect(() => themeShades('red')).toThrow()
   })
 })
+
+describe('printUrl', () => {
+  it('拼出打印文件地址:默认下载 PDF;baseUrl 末尾斜杠与 id 特殊字符被处理', () => {
+    const api = new ApiClient({ baseUrl: 'https://erp.test/', storage: memory() })
+    expect(api.printUrl('abc')).toBe('https://erp.test/api/documents/abc/print?format=pdf&download=1')
+    expect(api.printUrl('a/b', 'png', { templateId: 't 1', download: false })).toBe('https://erp.test/api/documents/a%2Fb/print?format=png&templateId=t+1')
+  })
+})

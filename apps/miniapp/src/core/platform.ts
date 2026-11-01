@@ -47,3 +47,18 @@ export function uniFetch(uni: {
       })
     })) as typeof fetch
 }
+
+/** 分享相关的 uni/wx 调用封装(见 share.ts) */
+export function uniSharePlatform(
+  uni: { downloadFile(o: { url: string; header: Record<string, string>; success(r: { statusCode: number; tempFilePath: string }): void; fail(e: { errMsg: string }): void }): void },
+  wx: {
+    shareFileMessage(o: { filePath: string; fileName: string; success(): void; fail(e: { errMsg: string }): void }): void
+    showShareImageMenu(o: { path: string; success(): void; fail(e: { errMsg: string }): void }): void
+  },
+): import('./share').SharePlatform {
+  return {
+    download: (o) => new Promise((resolve, reject) => uni.downloadFile({ ...o, success: resolve, fail: (e) => reject(new Error(e.errMsg)) })),
+    shareFile: (o) => new Promise((resolve, reject) => wx.shareFileMessage({ ...o, success: () => resolve(), fail: reject })),
+    shareImage: (path) => new Promise((resolve, reject) => wx.showShareImageMenu({ path, success: () => resolve(), fail: reject })),
+  }
+}

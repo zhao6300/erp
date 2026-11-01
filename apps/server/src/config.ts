@@ -30,6 +30,10 @@ const envSchema = z.object({
   /** 独立部署:License 文件签名公钥(PEM, Ed25519) */
   LICENSE_PUBLIC_KEY: z.string().optional(),
   BACKUP_HMAC_SECRET: z.string().default('dev-only-change-me'),
+  /** PDF/图片渲染用的浏览器。缺省使用 Playwright 下载的 Chromium;Docker 镜像里设为 /usr/bin/chromium */
+  CHROMIUM_PATH: z.string().optional(),
+  /** 容器内以 root 运行时 Chromium 沙箱不可用 */
+  CHROMIUM_NO_SANDBOX: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   WECHAT_APPID: z.string().optional(),
   WECHAT_SECRET: z.string().optional(),
   PLUGINS_DIR: z.string().default('./plugins'),

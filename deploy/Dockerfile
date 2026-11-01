@@ -14,6 +14,12 @@ RUN pnpm --filter @erp/server build \
 FROM node:22-bookworm-slim AS server
 WORKDIR /app
 ENV NODE_ENV=production
+# 单据 PDF/图片由服务端用无头 Chromium 渲染(需求 20.8)。必须带 CJK 字体,否则中文显示为空白。
+# 容器内以 root 运行,Chromium 沙箱不可用;渲染器已禁用 JavaScript 并拦截除 data: 外的全部请求。
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends chromium fonts-noto-cjk \
+ && rm -rf /var/lib/apt/lists/*
+ENV CHROMIUM_PATH=/usr/bin/chromium CHROMIUM_NO_SANDBOX=true
 # 第三方依赖保持外部(tsup 仅打包 @erp/* 工作区包),因此需要带上 node_modules
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/server/node_modules ./apps/server/node_modules

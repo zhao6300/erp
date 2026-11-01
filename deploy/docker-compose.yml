@@ -12,6 +12,8 @@ x-env: &env
   FILE_STORAGE_DIR: /data/files
   BACKUP_DIR: /data/backups
   PLUGINS_DIR: /app/plugins
+  CHROMIUM_PATH: /usr/bin/chromium
+  CHROMIUM_NO_SANDBOX: 'true'
 
 x-server: &server
   build:

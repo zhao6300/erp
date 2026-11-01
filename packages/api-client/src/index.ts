@@ -65,6 +65,14 @@ export class ApiClient {
   async token(): Promise<string | null> {
     return this.o.storage.get(TOKEN_KEY)
   }
+  /** 单据打印文件的下载地址(PDF/图片由服务端渲染;需要 Authorization 头,所以调用方要自带令牌下载) */
+  printUrl(docId: string, format: 'pdf' | 'png' | 'html' = 'pdf', opts: { templateId?: string; download?: boolean } = {}): string {
+    const q = new URLSearchParams({ format })
+    if (opts.templateId) q.set('templateId', opts.templateId)
+    if (opts.download ?? true) q.set('download', '1')
+    return `${this.o.baseUrl.replace(/\/$/, '')}/api/documents/${encodeURIComponent(docId)}/print?${q}`
+  }
+
   async setToken(t: string | null): Promise<void> {
     if (t) await this.o.storage.set(TOKEN_KEY, t)
     else await this.o.storage.remove(TOKEN_KEY)

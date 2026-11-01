@@ -28,6 +28,8 @@ import type { CustomFieldService } from './customFields.service'
 import type { SettingsService } from './settings.service'
 import { DOC_META } from '../docs/document.model'
 import { mustLoadDoc } from '../docs/document.repo'
+import type { FileService } from '../core/files.service'
+import type { PrintRenderer, RenderFormat } from './print-renderer'
 
 export interface PrintTemplateRow {
   id: string
@@ -47,6 +49,8 @@ export class PrintService {
     private settings: SettingsService,
     private cf: CustomFieldService,
     private audit: AuditService,
+    private files?: FileService,
+    private renderer?: PrintRenderer,
   ) {}
 
   /** 每种单据类型一个内置默认模板(需求 20.1) */
@@ -188,7 +192,28 @@ export class PrintService {
       const defs = await this.cf.enabledDefs(tx, obj)
       for (const d of defs) custom[d.code] = formatCustom(d, doc.custom[d.code])
     }
-    return { data: { header: safeHeader, lines: safeLines, custom, tenantName: tenant?.name ?? '' }, docType: doc.docType }
+    return { data: { header: safeHeader, lines: safeLines, custom, tenantName: tenant?.name ?? '', logoUrl: await this.logoDataUri(tx) }, docType: doc.docType }
+  }
+
+  /** 租户 Logo 内联为 data URI:打印页(HTML/PDF/图片)不依赖任何外部链接,浏览器渲染时网络被禁用 */
+  private async logoDataUri(tx: Tx): Promise<string | null> {
+    if (!this.files) return null
+    const b = await tx.maybeOne('SELECT logo_file_id FROM branding_config')
+    if (!b?.logo_file_id) return null
+    try {
+      const f = await this.files.read(tx, b.logo_file_id)
+      return f.mime.startsWith('image/') ? `data:${f.mime};base64,${f.data.toString('base64')}` : null
+    } catch {
+      return null // 文件丢失不应让整张单据无法打印
+    }
+  }
+
+  /** 按格式输出单据:html(浏览器打印)、pdf、png(需求 20.8) */
+  async renderDocument(ctx: Ctx, docId: string, format: 'html' | RenderFormat, templateId?: string): Promise<{ body: Buffer | string; mime: string; ext: string }> {
+    const r = await this.renderHtml(ctx, docId, templateId)
+    if (format === 'html') return { body: r.html, mime: 'text/html; charset=utf-8', ext: 'html' }
+    if (!this.renderer) throw new AppError('PRINT_FAILED', '服务端未启用 PDF/图片渲染')
+    return { body: await this.renderer.render(r.html, r.paper, format), mime: format === 'pdf' ? 'application/pdf' : 'image/png', ext: format }
   }
 
   /** HTML 渲染(浏览器打印与 PDF 共用同一份排版结果) */

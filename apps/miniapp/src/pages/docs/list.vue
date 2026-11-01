@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
+import { onLoad } from '@dcloudio/uni-app'
 import { ApiError, LocalDraft } from '@erp/api-client'
+import { uniSharePlatform } from '../../core/platform'
 import { api, drafts } from '../../core/runtime'
+import { shareDocument } from '../../core/share'
 
 declare const uni: any
+declare const wx: any
 
 interface Row { id: string; docNo: string; docType: string; docDate: string; status: string; partnerName: string | null; totalAmount: string; version: number }
 const rows = ref<Row[]>([])
@@ -42,14 +45,15 @@ async function resubmit(d: LocalDraft) {
 }
 const dropDraft = async (d: LocalDraft) => (await drafts.remove(d.clientRequestId), load())
 
-/**
- * 分享:转发单据卡片(单号 + 金额)给微信好友。
- * 需求 20.8 要求的"服务端渲染 PDF/图片再调起微信发送"尚未实现(服务端目前只输出 HTML 打印页)。
- */
-onShareAppMessage((e: { target?: { dataset?: { id?: string } } }) => {
-  const r = rows.value.find((x) => x.id === e.target?.dataset?.id)
-  return { title: r ? `${r.docNo} ¥${r.totalAmount}` : '单据分享', path: `/pages/docs/list?doc=${r?.id ?? ''}` }
-})
+/** 分享(需求 20.8):服务端按默认模板生成 PDF/图片,下载后调起微信发送界面 */
+async function share(r: Row) {
+  const pick = await new Promise<{ tapIndex: number }>((resolve) => uni.showActionSheet({ itemList: ['发送 PDF', '发送图片'], success: resolve, fail: () => resolve({ tapIndex: -1 }) }))
+  if (pick.tapIndex < 0) return
+  uni.showLoading({ title: '正在生成', mask: true })
+  const result = await shareDocument(api, uniSharePlatform(uni, wx), { id: r.id, docNo: r.docNo }, pick.tapIndex === 0 ? 'pdf' : 'png')
+  uni.hideLoading()
+  if (!result.ok && !result.cancelled) uni.showToast({ title: result.message, icon: 'none' })
+}
 </script>
 
 <template>
@@ -60,7 +64,7 @@ onShareAppMessage((e: { target?: { dataset?: { id?: string } } }) => {
       <view v-for="r in rows" :key="r.id" class="card">
         <view class="row"><text>{{ r.docNo }}</text><text>{{ STATUS[r.status] }}</text></view>
         <view class="row"><text>{{ r.partnerName }}</text><text>{{ r.totalAmount }}</text></view>
-        <view class="row"><text v-if="r.status === 'draft'" @tap="audit(r)">审核</text><button class="share" open-type="share" :data-id="r.id" size="mini">转发</button></view>
+        <view class="row"><text v-if="r.status === 'draft'" @tap="audit(r)">审核</text><text @tap="share(r)">分享</text></view>
       </view>
     </view>
     <view v-else>

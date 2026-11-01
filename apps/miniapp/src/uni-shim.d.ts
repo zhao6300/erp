@@ -4,5 +4,4 @@ declare module '@dcloudio/uni-app' {
   export function onLoad(cb: (query: Record<string, string>) => void): void
   export function onShow(cb: () => void): void
   export function onLaunch(cb: () => void): void
-  export function onShareAppMessage(cb: (e: { target?: { dataset?: { id?: string } } }) => { title: string; path: string }): void
 }

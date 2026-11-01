@@ -215,7 +215,7 @@ ${p.showTotals ? `<div class="band totals" style="height:${m.totalsHeight}mm">${
     .join('\n')
   return `<!doctype html><html><head><meta charset="utf-8"><style>
 @page{size:${paper.w}mm ${paper.h === null ? 'auto' : paper.h + 'mm'};margin:0}
-body{margin:0;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+body{margin:0;font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","WenQuanYi Micro Hei",sans-serif}
 .page{position:relative;page-break-after:always}
 .band{position:relative}.el{position:absolute;white-space:nowrap}
 table.lines{width:100%;border-collapse:collapse}table.lines th,table.lines td{border-bottom:.2mm solid #999;padding:0 1mm}

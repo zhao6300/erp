@@ -2,6 +2,7 @@ import { BrandingService } from './config/branding.service'
 import { CustomFieldService } from './config/customFields.service'
 import { ConfigPackageService } from './config/packages.service'
 import { PrintService } from './config/print.service'
+import { PrintRenderer } from './config/print-renderer'
 import { NumberingService, SettingsService } from './config/settings.service'
 import type { AppConfig } from './config'
 import { AuditService } from './core/audit'
@@ -69,6 +70,7 @@ export interface ContainerOverrides {
   storage?: StorageDriver
   db?: Db
   pluginTimeoutMs?: number
+  renderer?: PrintRenderer
 }
 
 export async function createContainer(config: AppConfig, o: ContainerOverrides = {}): Promise<Container> {
@@ -89,7 +91,8 @@ export async function createContainer(config: AppConfig, o: ContainerOverrides =
   const customFields = new CustomFieldService(db, cache, audit)
   const files = new FileService(db, o.storage ?? new LocalDiskStorage(config.FILE_STORAGE_DIR), config.BACKUP_HMAC_SECRET)
   const branding = new BrandingService(db, files, audit)
-  const print = new PrintService(db, settings, customFields, audit)
+  const renderer = o.renderer ?? new PrintRenderer({ executablePath: config.CHROMIUM_PATH, noSandbox: config.CHROMIUM_NO_SANDBOX })
+  const print = new PrintService(db, settings, customFields, audit, files, renderer)
   const packages = new ConfigPackageService(files, audit, cache)
   const products = new ProductService(settings, customFields, audit)
   const partners = new PartnerService(customFields, audit)
@@ -148,6 +151,7 @@ export async function createContainer(config: AppConfig, o: ContainerOverrides =
     io,
     tenants,
     async close() {
+      await renderer.close()
       await db.close()
       await kv.close()
     },
